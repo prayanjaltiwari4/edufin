@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edufin</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #f5faff;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      width: 85%;
+      max-width: 950px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #0d47a1;
+      margin-bottom: 10px;
+      font-style: bold;
+      font-size: 50px;
+    }
+
+    p {
+      text-align: center;
+      color: #555;
+      margin-bottom: 25px;
+      font-style: italic;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .summary div {
+      flex: 1;
+      text-align: center;
+      margin: 8px 0;
+      font-size: 16px;
+      color: #0d47a1;
+    }
+
+    .inputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    input[type="number"], input[type="text"], input[type="date"], select {
+      flex: 1;
+    }
+
+    button {
+      background-color: #42a5f5;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background-color: #1e88e5;
+    }
+
+    hr {
+      border: none;
+      height: 2px;
+      background: #ccc;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border-left: 1px solid #ccc;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+    }
+
+    th:first-child, td:first-child {
+      border-left: none;
+    }
+
+    th:last-child, td:last-child {
+      border-right: none;
+    }
+
+    th {
+      background: #bbdefb;
+      color: #0d47a1;
+    }
+
+    tr:nth-child(even) {
+      background: #f4f7fb;
+    }
+
+    #chartContainer {
+      margin-top: 30px;
+    }
+
+    canvas {
+      width: 100%;
+      max-height: 250px;
+    }
+
+    .total-table {
+      margin-top: 25px;
+      border-top: 2px solid #90caf9;
+      padding-top: 10px;
+    }
+
+    .editable-input {
+      width: 100px;
+      padding: 5px;
+      text-align: center;
+      border: 1px solid #bbb;
+      border-radius: 5px;
+    }
+
+    .alert-box {
+      text-align: center;
+      background-color: #ffebee;
+      border: 1px solid #e53935;
+      color: #b71c1c;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      display: none;
+      font-weight: 600;
+    }
+
+    .footer-note {
+      text-align: center;
+      margin-top: 20px;
+      color: #777;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>EduFin</h2>
+    <p>Track your expenses, manage your budget, and reach your savings target!</p>
+    <hr>
+<div id="aiAssistant" style="margin-top:30px;">
+  <h3 style="text-align:center;color:#0d47a1;">💬 Gemini Smart Assistant</h3>
+  <textarea id="aiInput" rows="3" placeholder="Ask Gemini about your spending..." style="width:100%;padding:10px;border-radius:8px;border:1px solid #ccc;"></textarea>
+  <button id="askGemini" style="margin-top:10px;width:100%;">Ask Gemini</button>
+  <div id="aiResponse" style="margin-top:15px;background:#f4f7fb;padding:15px;border-radius:8px;min-height:50px;"></div>
+</div>
+
+    <div class="summary">
+      <div><strong>Total Expenses:</strong> ₹<span id="total">0.00</span></div>
+      <div><strong>Recent Expense:</strong> <span id="recent">-</span></div>
+      <div>
+        <strong>Budget:</strong> ₹<input id="budgetInput" type="number" class="editable-input" value="2000">
+      </div>
+      <div>
+        <strong>Target Savings:</strong> ₹<input id="targetInput" type="number" class="editable-input" value="500">
+      </div>
+    </div>
+
+    <div id="alertBox" class="alert-box">
+      ⚠️ Alert! Your total expenses have exceeded the set budget!
+    </div>
+
+    <hr>
+
+    <div class="inputs">
+       <select id="category">
+        <option value="" disabled selected>Category</option>
+        <option>Food</option>
+        <option>Transport</option>
+        <option>Entertainment</option>
+        <option>Education</option>
+        <option>Skincare</option>
+        <option>Clothes</option>
+      </select>
+      <input type="text" id="name" placeholder="venue">
+      <input type="number" id="amount" placeholder=">Amount">
+      <input type="date" id="date">
+      <button onclick="addExpense()">Add Expense</button>
+    </div>
+
+    <hr>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Venue</th>
+          <th>Amount</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="expenseTable"></tbody>
+    </table>
+
+    <div class="total-table">
+      <table>
+        <tr>
+          <th>Total Spent (₹)</th>
+          <th>Remaining Budget (₹)</th>
+          <th>Target Savings (₹)</th>
+          <th>Achieved Savings (₹)</th>
+          <th>To Save This Month (₹)</th>
+        </tr>
+        <tr>
+          <td id="spent">0.00</td>
+          <td id="remaining">0.00</td>
+          <td id="target">500.00</td>
+          <td id="saved">0.00</td>
+          <td id="tosave">0.00</td>
+        </tr>
+      </table>
+    </div>
+
+    <div id="chartContainer">
+      <h3 style="text-align:center;color:#0d47a1; font-size: 30px;font-style: bold;">Expense Breakdown</h3>
+      <canvas id="expenseChart"></canvas>
+    </div>
+
+    <div class="footer-note">
+      © 2025 Edufin - Manage your money smarter 💡
+    </div>
+  </div>
+
+  <script>
+    
+    
+  
+const GEMINI_API_KEY="AIzaSyCX7mQKykHt_l6CIBgm-zj068_CylgjmsQ";
+  document.getElementById('askGemini').addEventListener('click', async () => {
+    const question = document.getElementById('aiInput').value.trim();
+    if (!question) {
+      alert("Please enter a question for Gemini.");
+      return;
+    }
+
+    // Build a summary of current spending to provide context
+    const total = document.getElementById('total').innerText;
+    const remaining = document.getElementById('remaining').innerText;
+    const target = document.getElementById('target').innerText;
+    const saved = document.getElementById('saved').innerText;
+    const expensesSummary = JSON.stringify(expenses.slice(-5), null, 2);
+
+    const contextPrompt = `
+      You are an AI financial advisor integrated into Edufin.
+      The user’s spending summary:
+      - Total expenses: ₹${total}
+      - Remaining budget: ₹${remaining}
+      - Target savings: ₹${target}
+      - Saved so far: ₹${saved}
+      - Recent expenses: ${expensesSummary}
+      Now respond to the user's query about their finances:
+      User: ${question}
+    `;
+
+    document.getElementById('aiResponse').innerHTML = "💡 Thinking...";
+
+    try {
+     
+
+      const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + GEMINI_API_KEY, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: contextPrompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't understand that.";
+      console.log(aiText);
+      document.getElementById('aiResponse').innerHTML = '<b>Gemini says:</b> ' + aiText;
+    } catch (error) {
+      console.error(error);
+      document.getElementById('aiResponse').innerHTML = "⚠ Error connecting to Gemini API.";
+    }
+  });
+
+   let expenses = [];
+    let chart;
+
+    function addExpense() {
+      const Venue = document.getElementById('name').value.trim();
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value;
+      const budget = parseFloat(document.getElementById('budgetInput').value);
+      const target = parseFloat(document.getElementById('targetInput').value);
+
+      if (!Venue || !amount || !category || !date) {
+        alert("Please fill all fields!");
+        return;
+      }
+
+      const expense = { Venue, amount, category, date };
+      expenses.push(expense);
+      updateTable();
+      updateSummary(budget, target);
+      updateChart();
+
+      document.getElementById('Venue').value = '';
+      document.getElementById('amount').value = '';
+      document.getElementById('category').value = '';
+      document.getElementById('date').value = '';
+    }
+
+    function updateTable() {
+      const table = document.getElementById('expenseTable');
+      table.innerHTML = '';
+
+      expenses.forEach((exp, index) => {
+        const row = `<tr>
+          <td>${exp.Venue}</td>
+          <td>₹${exp.amount.toFixed(2)}</td>
+          <td>${exp.category}</td>
+          <td>${exp.date}</td>
+          <td><button onclick="deleteExpense(${index})" style="background-color:#ef5350;">Delete</button></td>
+        </tr>`;
+        table.innerHTML += row;
+      });
+    }
+
+    function deleteExpense(index) {
+      expenses.splice(index, 1);
+      const budget = parseFloat(document.getElementById('budgetInput').value);
+      const target = parseFloat(document.getElementById('targetInput').value);
+      updateTable();
+      updateSummary(budget, target);
+      updateChart();
+    }
+
+    function updateSummary(budget, target) {
+      const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      document.getElementById('total').innerText = total.toFixed(2);
+      document.getElementById('spent').innerText = total.toFixed(2);
+
+      const recent = expenses.length > 0 ? expenses[expenses.length - 1].Venue : '-';
+      document.getElementById('recent').innerText = recent;
+
+      const remaining = budget - total;
+      const saved = remaining >= target ? target : remaining > 0 ? remaining : 0;
+      const toSave = target - saved > 0 ? target - saved : 0;
+
+      document.getElementById('remaining').innerText = remaining.toFixed(2);
+      document.getElementById('target').innerText = target.toFixed(2);
+      document.getElementById('saved').innerText = saved.toFixed(2);
+      document.getElementById('tosave').innerText = toSave.toFixed(2);
+
+      
+      const alertBox = document.getElementById('alertBox');
+      if (total > budget) {
+        alertBox.style.display = 'block';
+      } else {
+        alertBox.style.display = 'none';
+      }
+    }
+
+    function updateChart() {
+      const categories = {};
+      expenses.forEach(exp => {
+        categories[exp.category] = (categories[exp.category] || 0) + exp.amount;
+      });
+
+      const data = {
+        labels: Object.keys(categories),
+        datasets: [{
+          data: Object.values(categories),
+          backgroundColor: ['#64b5f6', '#81c784', '#ffb74d', '#e57373', '#ba68c8']
+        }]
+      };
+
+      if (chart) chart.destroy();
+
+      const ctx = document.getElementById('expenseChart').getContext('2d');
+      chart = new Chart(ctx, {
+        type: 'pie',
+        data: data,
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+    
+  </script>
+</body>
+</html>
